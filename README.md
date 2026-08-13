@@ -17,8 +17,25 @@ Points at `https://devtoolbox-frontend-final.vercel.app` — see `src/config/env
 
 - `android/local.properties` → `sdk.dir` set to the local Android SDK path
 - `android/gradle.properties` → `org.gradle.java.home` set to the local JDK 17 path
+- `android/keystore.properties` + `android/app/release.keystore` → a dedicated release signing key (see below)
 
-If your SDK/JDK paths differ, edit those two files before building.
+If your SDK/JDK paths differ, edit `local.properties`/`gradle.properties` before building.
+
+## Release signing (VirusTotal false-positive fix)
+
+Same fix applied to RailLens's `train-db-mobile` earlier today: `assembleRelease` used to fall back to signing with the Android SDK's shared `debug.keystore` (password `android`, identical on every RN install worldwide). That's unsafe for a real app, and separately AV heuristics — AhnLab-V3 on VirusTotal flagged it — treat that shared certificate as a red flag since it carries zero publisher reputation and is reused by whatever else was also built/signed with defaults.
+
+The fix: `android/app/build.gradle` now signs release builds with a real key loaded from `android/keystore.properties` (git-ignored, never committed — see `.gitignore`'s `*.keystore`/`keystore.properties` rules), and only falls back to the debug keystore when that file is absent, so a clean checkout without it still builds (`assembleDebug` always works; `assembleRelease` without `keystore.properties` also still works, but you shouldn't ship that build).
+
+This checkout already has `android/keystore.properties` and `android/app/release.keystore` in place with a dedicated key generated for DevToolbox (not reused from RailLens — each app should have its own signing identity). If you ever need to regenerate it:
+
+```bash
+cd android
+keytool -genkeypair -v -storetype PKCS12 -keystore app/release.keystore \
+  -alias devtoolbox-release -keyalg RSA -keysize 2048 -validity 10000
+```
+
+then update `keystore.properties` with the new `storeFile`/`storePassword`/`keyAlias`/`keyPassword`. Keep both files out of git and back them up somewhere safe — losing the keystore means future releases can no longer update an app installed from an earlier build signed with it.
 
 ## Build
 
@@ -29,9 +46,7 @@ cd android
 # or: ./gradlew assembleRelease  # macOS/Linux
 ```
 
-APK output: `android/app/build/outputs/apk/release/app-release.apk`
-
-No Play Store account or paid signing needed — this release build is signed with the Android debug keystore (fine for sideloading/demo use, same as `assembleDebug`). Install the APK directly on a device with "install from unknown sources" enabled, or share the file.
+APK output: `android/app/build/outputs/apk/release/app-release.apk`, signed with the dedicated release key above. No Play Store account needed — install the APK directly on a device with "install from unknown sources" enabled, or share the file.
 
 To run on a plugged-in/emulated device instead:
 

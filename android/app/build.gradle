@@ -72,6 +72,25 @@ def enableProguardInReleaseBuilds = false
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+// Release signing: loaded from android/keystore.properties, which is
+// git-ignored and never committed. That file holds the path to a real
+// release keystore plus its store/key passwords. Signing a release build
+// with the SDK's shared debug.keystore instead (well-known password
+// "android", identical across every RN/Android install worldwide) is unsafe
+// for a real app and, separately, APKs signed with that certificate carry
+// zero publisher reputation and are a well-documented false-positive
+// trigger for AV heuristics - this is the same VirusTotal false-positive
+// (AhnLab-V3) fixed today in RailLens's train-db-mobile, applied here too.
+// Falls back to the debug keystore only when keystore.properties is
+// absent, so `./gradlew assembleDebug` and any clean checkout without the
+// properties file still build.
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+def hasReleaseKeystore = keystorePropertiesFile.exists()
+if (hasReleaseKeystore) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -92,15 +111,24 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        if (hasReleaseKeystore) {
+            release {
+                storeFile rootProject.file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            // Real release key when keystore.properties exists (see above);
+            // falls back to the debug keystore otherwise so builds never
+            // hard-fail, but that fallback should never ship to users.
+            signingConfig hasReleaseKeystore ? signingConfigs.release : signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
