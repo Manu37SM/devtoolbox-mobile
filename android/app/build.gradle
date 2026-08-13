@@ -97,6 +97,25 @@ android {
     compileSdk rootProject.ext.compileSdkVersion
 
     namespace "com.devtoolboxmobile"
+
+    // Windows-only fix: New Architecture's generated C++/CMake object file
+    // paths (react_codegen_*, safeareacontextJSI-generated.cpp.o, etc.)
+    // nest deep enough that combined with this project's own path depth
+    // (C:\Users\...\devtoolbox\mobile\...), the default
+    // android/app/.cxx/... intermediate build directory blows past
+    // Windows' 260-character MAX_PATH limit - ninja then fails with
+    // "Filename longer than 260 characters" (same issue and fix as
+    // RailLens's train-db-mobile). Redirecting the native build's staging
+    // directory to a short, near-root path sidesteps this without needing
+    // to relocate the whole project or change Windows-wide settings.
+    // Harmless on macOS/Linux (no path-length limit there), so this isn't
+    // behind any OS check.
+    externalNativeBuild {
+        cmake {
+            buildStagingDirectory "C:/rncxx-devtoolbox"
+        }
+    }
+
     defaultConfig {
         applicationId "com.devtoolboxmobile"
         minSdkVersion rootProject.ext.minSdkVersion
