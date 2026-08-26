@@ -4,7 +4,7 @@ import { colors, spectrum } from '@/theme/colors';
 
 type Props = {
   onRetry: () => void;
-  /** True when the site loaded but returned an HTTP error rather than a network failure. */
+
   httpError?: boolean;
 };
 

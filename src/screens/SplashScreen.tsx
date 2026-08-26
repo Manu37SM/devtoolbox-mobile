@@ -2,11 +2,6 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, spectrum } from '@/theme/colors';
 
-/**
- * Branded loading state shown while the WebView boots the live site.
- * The row of spectrum dots is the "versatility" motif — one toolbox,
- * many tools/colors — reused from the splash into the offline screen.
- */
 export default function SplashScreen() {
   return (
     <View style={styles.container}>
