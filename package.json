@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "react": "19.1.1",
-    "react-native": "0.82.0",
+    "react-native": "0.87.1",
     "react-native-safe-area-context": "^5.5.2",
     "react-native-webview": "^13.13.5",
     "@react-native-community/netinfo": "^11.4.1"
