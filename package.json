@@ -29,12 +29,12 @@
     "@react-native/typescript-config": "0.87.1",
     "@types/jest": "^30.0.0",
     "@types/react": "^19.1.1",
-    "@types/react-test-renderer": "^19.1.0",
+    "@types/react-test-renderer": "^19.3.0",
     "babel-plugin-module-resolver": "^5.0.2",
     "eslint": "^10.9.1",
     "jest": "^30.5.1",
     "prettier": "2.8.8",
-    "react-test-renderer": "19.2.8",
+    "react-test-renderer": "19.3.0",
     "typescript": "^5.8.3"
   },
   "engines": {
