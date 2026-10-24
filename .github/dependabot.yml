@@ -1,15 +1,44 @@
 version: 2
+
+# Policy: Dependabot may only propose SAFE updates to the mobile app.
+#   * Monthly, one grouped minor/patch PR.
+#   * Semver-major updates are never proposed (babel 8, eslint 10, TypeScript 7
+#     etc. broke the toolchain when merged one by one).
+#   * React, React Native, @react-native/* and the community CLI are a single
+#     coupled set pinned to each other: they are upgraded together by hand with
+#     the React Native Upgrade Helper, never by Dependabot.
+#   * The Gradle wrapper is pinned by the React Native / AGP version, so it is
+#     not auto-updated either.
+#   * There is no CI in this repo yet: run `npm ci && npx tsc --noEmit &&
+#     npx jest && npx eslint .` locally before merging any Dependabot PR.
 updates:
-  - package-ecosystem: "npm"
+  - package-ecosystem: npm
     directory: "/"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
-  - package-ecosystem: "gradle"
-    directory: "/android"
-    schedule:
-      interval: "weekly"
-  - package-ecosystem: "github-actions"
+      interval: monthly
+    open-pull-requests-limit: 2
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "chore(deps)"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react"
+      - dependency-name: "react-test-renderer"
+      - dependency-name: "react-native"
+      - dependency-name: "@react-native/*"
+      - dependency-name: "@react-native-community/cli*"
+      - dependency-name: "@types/react"
+      - dependency-name: "@types/react-test-renderer"
+    groups:
+      npm-minor-patch:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: monthly
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
